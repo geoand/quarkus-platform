@@ -42,10 +42,10 @@ jobs:
         working-directory: ./quarkus
 
       - name: Build Camel Quarkus
-        run: mvn -B install -DskipTests
+        run: mvn -B install
         working-directory: ./camel-quarkus
 
       - name: Build Quarkus Platform
-        run: mvn -B install -DskipTests -Dquarkus.version=999-SNAPSHOT -Dcamel-quarkus.version=1.1.0-SNAPSHOT
+        run: mvn -B install -Dquarkus.version=999-SNAPSHOT -Dcamel-quarkus.version=1.1.0-SNAPSHOT
         working-directory: ./camel-quarkus
 
