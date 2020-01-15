@@ -1,0 +1,107 @@
+name: "Camel Quarkus master against Quarkus master"
+# TODO: make cron
+on: [push]
+
+env:
+  # Workaround testsuite locale issue
+  LANG: en_US.UTF-8
+  GH_ACTIONS_JAVA_VERSION: 8
+  SNAPSHOT_QUARKUS_VERSION: 999-SNAPSHOT
+  # TODO: make this dynamic
+  SNAPSHOT_CAMEL_QUARKUS_VERSION: 1.1.0-SNAPSHOT
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        type: [ latestCommit, latestRelease ]
+      # ensure that failure of one job doesn't affect others
+      fail-fast: false
+    name: build-and-testing
+    steps:
+      - name: Set up Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ env.GH_ACTIONS_JAVA_VERSION }}
+
+      - name: Checkout Quarkus
+        uses: actions/checkout@v2
+        with:
+          repository: quarkusio/quarkus
+          path: quarkus
+
+      - name: Checkout Camel Quarkus
+        uses: actions/checkout@v2
+        with:
+          repository: apache/camel-quarkus
+          ref: quarkus-master
+          path: camel-quarkus
+        if: matrix.type == 'latestCommit'
+
+      - name: Checkout Quarkus Platform
+        uses: actions/checkout@v2
+        with:
+          path: quarkus-platform
+
+      - uses: actions/cache@v1
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build Quarkus
+        run: mvn -B install -DskipTests -DskipITs -DskipDocs
+        working-directory: ./quarkus
+
+      - name: Build Camel Quarkus
+        run: mvn -B install -Dquarkus.version=${SNAPSHOT_QUARKUS_VERSION} -DskipTests
+        working-directory: ./camel-quarkus
+        env:
+          MAVEN_OPTS: -Xmx5g
+        if: matrix.type == 'latestCommit'
+
+      - name: Regenerate Camel tests
+        run: mvn validate -Pregen-camel -N -Dquarkus.version=${SNAPSHOT_QUARKUS_VERSION} -Dcamel-quarkus.version=${SNAPSHOT_CAMEL_QUARKUS_VERSION}
+        working-directory: ./quarkus-platform
+        if: matrix.type == 'latestCommit'
+
+      - name: Run tests
+        env:
+          STATUS: ${{ job.status }}
+          TYPE: ${{ matrix.type }}
+          CAMEL_VERSION: ${{ env.SNAPSHOT_CAMEL_QUARKUS_VERSION }}
+          QUARKUS_VERSION: ${{ env.SNAPSHOT_QUARKUS_VERSION }}
+        working-directory: ./quarkus-platform
+        run: |
+          if [[ ${TYPE} = 'latestCommit' ]]; then
+            echo "Running Platform tests for latest version of Quarkus and Camel"
+            CAMEL_VERSION_ARG=" -Dcamel-quarkus.version=$CAMEL_VERSION "
+          else
+            echo "Running Platform tests for latest version of Quarkus but the latest released version of Camel"
+            CAMEL_VERSION_ARG=" "
+          fi
+          mvn clean -B install -Dquarkus.version=${QUARKUS_VERSION} ${CAMEL_VERSION_ARG} -DskipTests
+          mvn -B verify -Dnative -Dquarkus.native.container-build=true -Dquarkus.version=${QUARKUS_VERSION} ${CAMEL_VERSION_ARG} -f integration-tests/camel/pom.xml
+
+      - name: Report
+        if: always()
+        env:
+          # TODO: fix
+          GITHUB_TOKEN: ${{ secrets.GITHUB_API_TOKEN }}
+          STATUS: ${{ job.status }}
+          TYPE: ${{ matrix.type }}
+        run: |
+          echo "The report step got status: ${STATUS}"
+          sudo apt-get update -o Dir::Etc::sourcelist="sources.list" \
+            -o Dir::Etc::sourceparts="-" -o APT::Get::List-Cleanup="0"
+          sudo apt-get install -y gnupg2 gnupg-agent
+          echo Installing SDKMAN
+          curl -s "https://get.sdkman.io" | bash
+          source ~/.sdkman/bin/sdkman-init.sh
+          sdk install jbang 0.21.0
+          # TODO fix
+
+
+
