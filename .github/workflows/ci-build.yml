@@ -3,16 +3,49 @@ on: [push]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        java: [ 8, 11 ]
     name: build-and-testing
     steps:
-      - name: Checkout Quarkus Platform
-        uses: actions/checkout@v2
+      - name: Set up Java
+        uses: actions/setup-java@v1
         with:
-          path: quarkus-platform
+          java-version: ${{ matrix.java }}
+
       - name: Checkout Quarkus
         uses: actions/checkout@v2
         with:
           repository: quarkusio/quarkus
           path: quarkus
+      - name: Checkout Camel Quarkus
+        uses: actions/checkout@v2
+        with:
+          repository: gsmet/camel-quarkus
+          ref: prepare-for-1.2
+          path: camel-quarkus
+      - name: Checkout Quarkus Platform
+        uses: actions/checkout@v2
+        with:
+          path: quarkus-platform
+
+      - uses: actions/cache@v1
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build Quarkus
+        run: mvn -B install -DskipTests -DskipITs
+        working-directory: ./quarkus
+
+      - name: Build Camel Quarkus
+        run: mvn -B install -DskipTests
+        working-directory: ./camel-quarkus
+
+      - name: Build Quarkus Platform
+        run: mvn -B install -DskipTests -Dquarkus.version=999-SNAPSHOT -Dcamel-quarkus.version=1.1.0-SNAPSHOT
+        working-directory: ./camel-quarkus
 
