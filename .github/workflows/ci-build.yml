@@ -46,7 +46,7 @@ jobs:
         working-directory: ./camel-quarkus
 
       - name: Build Quarkus Platform
-        run: mvn -B install -Dquarkus.version=999-SNAPSHOT -Dcamel-quarkus.version=1.1.0-SNAPSHOT -DskipTests
+        run: mvn -B install -Dquarkus.version=999-SNAPSHOT -Dcamel-quarkus.version=1.1.0-SNAPSHOT -DskipTests --projects '!io.quarkus:quarkus-universe-integration-tests-camel-netty-http'
         working-directory: ./quarkus-platform
 
       - name: Run selected Camel Quarkus integration tests
