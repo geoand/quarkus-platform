@@ -29,6 +29,8 @@ jobs:
         uses: actions/checkout@v2
         with:
           path: quarkus-platform
+          repository: ppalaga/quarkus-platform
+          ref: 200120-camel-next
 
       - uses: actions/cache@v1
         with:
@@ -46,12 +48,6 @@ jobs:
         working-directory: ./camel-quarkus
 
       - name: Build Quarkus Platform
-        run: mvn -B install -Dquarkus.version=999-SNAPSHOT -Dcamel-quarkus.version=1.1.0-SNAPSHOT -DskipTests --projects '!io.quarkus:quarkus-universe-integration-tests-camel-netty-http'
+        run: mvn -B install -Dquarkus.version=999-SNAPSHOT -Dcamel-quarkus.version=1.1.0-SNAPSHOT -Dnative -Dquarkus.native.container-build=true --projects '!io.quarkus:quarkus-universe-integration-tests-camel-fhir'
         working-directory: ./quarkus-platform
-
-      - name: Run selected Camel Quarkus integration tests
-        run: mvn -B verify  -Dquarkus.version=999-SNAPSHOT -Dcamel-quarkus.version=1.1.0-SNAPSHOT -Dnative -Dquarkus.native.container-build=true -f integration-tests/pom.xml --projects 'camel-core,camel-core-main,camel-bean,camel-exec,camel-platform-http,camel-platform-http-engine,camel-microprofile,camel-jackson,camel-netty-http,camel-jdbc'
-        working-directory: ./quarkus-platform
-
-
 
