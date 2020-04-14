@@ -4,6 +4,7 @@ on: [push]
 
 # For this CI to work, ECOSYSTEM_CI_TOKEN needs to contain a GitHub token with 'repo' rights
 
+
 env:
   ECOSYSTEM_CI_REPO: quarkusio/quarkus-ecosystem-ci
 
