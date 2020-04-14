@@ -1,10 +1,6 @@
 name: "Quarkus Ecosystem CI Trigger"
-
-# Adding the dispatch event to allow restarting the build on demand
-on:
-  schedule:
-    - cron: '0 */5 * * *'
-  repository_dispatch:
+# TODO convert to cron
+on: [push]
 
 # For this CI to work, ECOSYSTEM_CI_TOKEN needs to contain a GitHub token with 'repo' rights
 
