@@ -83,7 +83,7 @@ jobs:
             CAMEL_VERSION_ARG=" "
           fi
           mvn clean -B install -Dquarkus.version=${QUARKUS_VERSION} ${CAMEL_VERSION_ARG} -DskipTests
-          mvn -B verify -Dnative -Dquarkus.native.container-build=true -Dquarkus.version=${QUARKUS_VERSION} ${CAMEL_VERSION_ARG} -f integration-tests/camel/pom.xml
+          mvn -B verify -Dquarkus.native.container-build=true -Dquarkus.version=${QUARKUS_VERSION} ${CAMEL_VERSION_ARG} -f integration-tests/camel/pom.xml
 
       - name: Report
         if: always()
